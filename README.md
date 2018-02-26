@@ -75,7 +75,7 @@ sudo service ssh restart
 ```
 ## Login to Server
 ```
-ssh -i /path/<private key filename> grader@18.219.227.189
+ssh -i /path/<private key filename> grader@18.217.71.17
 ```
 # Prepare to deploy your project
 ## Configure the local time zone to UTC
@@ -136,3 +136,135 @@ exit
 ```
 sudo apt-get install git
 ```
+# Prepare to delpoy your project
+## Install and Configure Apache mod-wsgi application.
+1. Install Apache
+```sudo apt-get install apache2```
+2. Install mod-wsgi
+```sudo apt-get install libapache2```
+* If using python3, use the following command.
+```sudo apt-get install libapache2-mod-wsgi-py3```
+3. Restart Apache service.
+```sudo service apache2 restart```
+## Install and configure PostgreSQL
+1. Install PostgreSQL 
+```sudo apt-get install postgresql```
+2. make sure that remote connections are not allowed. 
+```sudo vim /etc/postgresql/9.3/main/pg_hba.conf```
+3. Login as postgres user 
+```sudo su - postgres```
+4. Open PostgreSQL shell. 
+```psql```
+5. Create a new database and user named catalog in postgreSQL shell.
+```
+CREATE DATABASE catalog;
+CREATE USER catalog;
+```
+5. Create a password for catalog user
+```
+ALTER ROLE catalog WITH PASSWORD 'graderCatalog';
+```
+6. Grant all privileges to catalog user on catalog database
+```
+GRANT ALL PRIVILEGES ON DATABASE catalog TO catalog;
+```
+7. Quit postgreSQL.
+```\q```
+8. Exit from user "postgres".
+```
+exit
+```
+## Clone and setup Item Catalog project
+1. Move to /var/www directory
+```
+cd /var/www/
+```
+2. Create ItemCatalog directory
+```
+mkdir ItemCatalog
+```
+3. Clone the github repository here
+```
+git clone <repository-url>
+Here, 
+git clone https://github.com/awalakaushik/ItemCatalog.git
+```
+8. Rename `application.py` to `__init__.py` using `sudo mv website.py __init__.py`
+9. Edit `catalog_database_setup.py`, `__init__.py` and `populate_database.py` and change `engine = create_engine('sqlite:///itemcatalogwithusers.db')` to `engine = create_engine('postgresql://catalog:graderCatalog@localhost/catalog')`
+10. Install pip 
+```sudo apt-get install python-pip```
+11. Install dependencies
+```
+pip install httplib2
+pip install requests
+pip install flask
+pip install sqlalchemy
+pip install psycopg2
+pip install oauth2client
+pip install Flask-SQLAlchemy
+```
+12. Install psycopg2 
+```
+sudo apt-get install postgresql python-psycopg2
+```
+13. Create database schema 
+```
+sudo python catalog_database_setup.py
+```
+
+## Configure and Enable a New Virtual Host
+1. Create ItemCatalog.conf 
+```
+sudo nano /etc/apache2/sites-available/ItemCatalog.conf
+```
+2. Add the following lines of code to the file to configure the virtual host. 	
+```
+<VirtualHost *:80>
+	ServerName 18.217.71.17
+	ServerAdmin admin@18.217.71.17
+	WSGIDaemonProcess ItemCatalog python-path=/var/www/ItemCatalog:/var/www/ItemCatalog/lib/python2.7/site-packages
+	WSGIProcessGroup ItemCatalog
+	WSGIScriptAlias / /var/www/ItemCatalog/itemcatalog.wsgi
+	<Directory /var/www/ItemCatalog/ItemCatalog/>
+		Order allow,deny
+		Allow from all
+	</Directory>
+	Alias /static /var/www/ItemCatalog/ItemCatalog/static
+	<Directory /var/www/ItemCatalog/ItemCatalog/static/>
+		Order allow,deny
+		Allow from all
+	</Directory>
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+	LogLevel warn
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
+3. Enable the virtual host with the following command: 
+```
+sudo a2ensite ItemCatalog
+```
+
+## Create the .wsgi File
+1. Create the .wsgi File under /var/www/ItemCatalog: 	
+```
+cd /var/www/ItemCatalog
+sudo nano itemcatalog.wsgi 
+```
+2. Add the below script to the flaskapp.wsgi file:	
+```
+#!/usr/bin/python
+import sys
+import logging
+logging.basicConfig(stream=sys.stderr)
+sys.path.insert(0,"/var/www/ItemCatalog/")
+
+from ItemCatalog import app as application
+application.secret_key = 'Add your secret key'
+```
+
+## Restart Apache
+1. Restart Apache `sudo service apache2 restart `
+
+# References
+* https://www.digitalocean.com/community/tutorials/how-to-run-django-with-mod_wsgi-and-apache-with-a-virtualenv-python-environment-on-a-debian-vps
+* https://www.digitalocean.com/community/tutorials/how-to-deploy-a-flask-application-on-an-ubuntu-vps
