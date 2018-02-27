@@ -139,7 +139,7 @@ sudo apt-get install git
 2. Install mod-wsgi
 ```sudo apt-get install libapache2-mod-wsgi```
 * If using python3, use the following command.
-```sudo apt-get install libapache2-mod-wsgi-py```
+```sudo apt-get install libapache2-mod-wsgi-py3```
 3. Restart Apache service.
 ```sudo service apache2 restart```
 
