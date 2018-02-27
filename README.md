@@ -192,7 +192,7 @@ sudo nano /etc/apache2/sites-available/FlaskApp.conf
 <VirtualHost *:80>
 	ServerName 18.222.49.123
 	ServerAdmin admin@18.222.49.123
-	WSGIScriptAlias / /var/www/ItemCatalog/flaskapp.wsgi
+	WSGIScriptAlias / /var/www/FlaskApp/flaskapp.wsgi
 	<Directory /var/www/FlaskApp/FlaskApp/>
 		Order allow,deny
 		Allow from all
