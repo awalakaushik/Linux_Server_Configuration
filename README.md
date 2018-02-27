@@ -4,10 +4,10 @@ A baseline installation of a Linux server and prepare it to host your web applic
 # Get your Server
 ## Start a new Ubuntu Server instance on Lightsail
 	Ubuntu Server instance details:
-	Public IP: 18.217.71.17
+	Public IP: 18.221.92.92
 	SSH Port: 2200
 	Username: grader
-	Access the hosted application here: http://18.217.71.17
+	Access the hosted application here: http://18.221.92.92
 
 ## SSH into your Server
 	Login to Amazon Lightsail and login to your newly created instance
