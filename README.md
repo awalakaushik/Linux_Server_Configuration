@@ -77,7 +77,7 @@ sudo service ssh restart
 ```
 ## Login to Server
 ```
-ssh -i /path/<private key filename> grader@18.217.71.17
+ssh -i /path/<private key filename> grader@18.222.49.123
 ```
 # Prepare to deploy your project
 ## Configure the local time zone to UTC
@@ -89,12 +89,6 @@ sudo dpkg-reconfigure tzdata
 
 ## Install and configure Apache to serve a Python mod_wsgi application
 * If you used Python 3 to build your project, you will need to install the Python 3 mod_wsgi package on your server
-```
-sudo apt-get install apache2
-sudo apt-get install libapache2-mod-wsgi-py3
-sudo apt-get install python3-setuptools libapache2-mod-wsgi-py3
-sudo service apache2 restart
-```
 ## Install and configure PostgreSQL
 * Do not allow remote connections
 * Create a new database, user named catalog that has limited permissions to your catalog application database
@@ -120,7 +114,7 @@ postgres=# CREATE USER catalog;
 ```
 * Set password for the user
 ```
-postgres=# ALTER ROLE catalog WITH PASSWORD 'grader@catalog';
+postgres=# ALTER ROLE catalog WITH PASSWORD 'password';
 ```
 * Give user catalog permissions to catalog application
 ```
@@ -143,47 +137,20 @@ sudo apt-get install git
 1. Install Apache
 ```sudo apt-get install apache2```
 2. Install mod-wsgi
-```sudo apt-get install libapache2```
+```sudo apt-get install libapache2-mod-wsgi```
 * If using python3, use the following command.
-```sudo apt-get install libapache2-mod-wsgi-py3```
+```sudo apt-get install libapache2-mod-wsgi-py```
 3. Restart Apache service.
 ```sudo service apache2 restart```
-## Install and configure PostgreSQL
-1. Install PostgreSQL 
-```sudo apt-get install postgresql```
-2. make sure that remote connections are not allowed. 
-```sudo vim /etc/postgresql/9.3/main/pg_hba.conf```
-3. Login as postgres user 
-```sudo su - postgres```
-4. Open PostgreSQL shell. 
-```psql```
-5. Create a new database and user named catalog in postgreSQL shell.
-```
-CREATE DATABASE catalog;
-CREATE USER catalog;
-```
-5. Create a password for catalog user
-```
-ALTER ROLE catalog WITH PASSWORD 'graderCatalog';
-```
-6. Grant all privileges to catalog user on catalog database
-```
-GRANT ALL PRIVILEGES ON DATABASE catalog TO catalog;
-```
-7. Quit postgreSQL.
-```\q```
-8. Exit from user "postgres".
-```
-exit
-```
+
 ## Clone and setup Item Catalog project
 1. Move to /var/www directory
 ```
 cd /var/www/
 ```
-2. Create ItemCatalog directory
+2. Create FlaskApp directory
 ```
-mkdir ItemCatalog
+mkdir FlaskApp
 ```
 3. Clone the github repository here
 ```
@@ -191,8 +158,8 @@ git clone <repository-url>
 Here, 
 git clone https://github.com/awalakaushik/ItemCatalog.git
 ```
-8. Rename `application.py` to `__init__.py` using `sudo mv website.py __init__.py`
-9. Edit `catalog_database_setup.py`, `__init__.py` and `populate_database.py` and change `engine = create_engine('sqlite:///itemcatalogwithusers.db')` to `engine = create_engine('postgresql://catalog:graderCatalog@localhost/catalog')`
+8. Rename `application.py` to `__init__.py` using `sudo mv application.py __init__.py`
+9. Edit `catalog_database_setup.py`, `__init__.py` and `populate_database.py` and change `engine = create_engine('sqlite:///itemcatalogwithusers.db')` to `engine = create_engine('postgresql://catalog:password@localhost/catalog')`
 10. Install pip 
 ```sudo apt-get install python-pip```
 11. Install dependencies
@@ -204,6 +171,7 @@ pip install sqlalchemy
 pip install psycopg2
 pip install oauth2client
 pip install Flask-SQLAlchemy
+pip install flask-seasurf
 ```
 12. Install psycopg2 
 ```
@@ -215,24 +183,22 @@ sudo python catalog_database_setup.py
 ```
 
 ## Configure and Enable a New Virtual Host
-1. Create ItemCatalog.conf 
+1. Create FlaskApp.conf 
 ```
-sudo nano /etc/apache2/sites-available/ItemCatalog.conf
+sudo nano /etc/apache2/sites-available/FlaskApp.conf
 ```
 2. Add the following lines of code to the file to configure the virtual host. 	
 ```
 <VirtualHost *:80>
-	ServerName 18.217.71.17
-	ServerAdmin admin@18.217.71.17
-	WSGIDaemonProcess ItemCatalog python-path=/var/www/ItemCatalog:/var/www/ItemCatalog/lib/python2.7/site-packages
-	WSGIProcessGroup ItemCatalog
-	WSGIScriptAlias / /var/www/ItemCatalog/itemcatalog.wsgi
-	<Directory /var/www/ItemCatalog/ItemCatalog/>
+	ServerName 18.222.49.123
+	ServerAdmin admin@18.222.49.123
+	WSGIScriptAlias / /var/www/ItemCatalog/flaskapp.wsgi
+	<Directory /var/www/FlaskApp/FlaskApp/>
 		Order allow,deny
 		Allow from all
 	</Directory>
-	Alias /static /var/www/ItemCatalog/ItemCatalog/static
-	<Directory /var/www/ItemCatalog/ItemCatalog/static/>
+	Alias /static /var/www/FlaskApp/FlaskApp/static
+	<Directory /var/www/FlaskApp/FlaskApp/static/>
 		Order allow,deny
 		Allow from all
 	</Directory>
@@ -243,14 +209,14 @@ sudo nano /etc/apache2/sites-available/ItemCatalog.conf
 ```
 3. Enable the virtual host with the following command: 
 ```
-sudo a2ensite ItemCatalog
+sudo a2ensite FlaskApp
 ```
 
 ## Create the .wsgi File
-1. Create the .wsgi File under /var/www/ItemCatalog: 	
+1. Create the .wsgi File under /var/www/FlaskApp: 	
 ```
-cd /var/www/ItemCatalog
-sudo nano itemcatalog.wsgi 
+cd /var/www/FlaskApp
+sudo nano flaskapp.wsgi 
 ```
 2. Add the below script to the flaskapp.wsgi file:	
 ```
@@ -258,9 +224,9 @@ sudo nano itemcatalog.wsgi
 import sys
 import logging
 logging.basicConfig(stream=sys.stderr)
-sys.path.insert(0,"/var/www/ItemCatalog/")
+sys.path.insert(0,"/var/www/FlaskApp/")
 
-from ItemCatalog import app as application
+from FlaskApp import app as application
 application.secret_key = 'Add your secret key'
 ```
 
